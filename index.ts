@@ -73,12 +73,17 @@ const pickRandomDynamicFeed = async () => {
   if (!feed) {
     return;
   }
-  const entry = await getRandomItemFromFeed(feed);
-  if (!entry) {
-    return;
+  console.log('Using ' + feed.title + ' ' + feed.uri)
+  try {
+    const entry = await getRandomItemFromFeed(feed);
+    if (!entry) {
+      return;
+    }
+    console.log('Publishing: ' + feed.title + "\n\n" + entry.title + " " + entry.link + '')
+    await publish(feed.title + "\n\n" + entry.title + " " + entry.link);
+  } catch (e) {
+    console.log('Error: ' + e)
   }
-  console.log('Publishing: ' + feed.title + "\n\n" + entry.title + " " + entry.link + '')
-  await publish(feed.title + "\n\n" + entry.title + " " + entry.link);
 }
 
 const checkForStaticFeeds = async () => {
