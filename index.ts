@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 import { getEventHash, getPublicKey, nip19, relayInit, signEvent } from "nostr-tools";
 import 'websocket-polyfill'
 import { extract } from '@extractus/feed-extractor'
-import { Feed, feeds } from './feeds'
+import { Feed, dynamicFeeds, staticFeeds } from './feeds'
 
 dotenv.config();
 
@@ -60,17 +60,55 @@ const getRandomFeed = async (feeds: Feed[]) => {
 const getRandomItemFromFeed = async (feed: Feed) => {
   const data = await extract(feed.uri);
   if (!data.entries) {
-    throw new Error("No entries in feed " + data);
+    console.log("No entries in feed " + data);
+    return null;
   }
 
   return data.entries[Math.floor(Math.random() * data.entries.length)];
 }
 
-const main = async () => {
-  const feed = await getRandomFeed(feeds);
+const pickRandomDynamicFeed = async () => {
+  console.log('Picking a random dynamic feed...')
+  const feed = await getRandomFeed(dynamicFeeds);
+  if (!feed) {
+    return;
+  }
   const entry = await getRandomItemFromFeed(feed);
+  if (!entry) {
+    return;
+  }
   console.log('Publishing: ' + feed.title + "\n\n" + entry.title + " " + entry.link + '')
   await publish(feed.title + "\n\n" + entry.title + " " + entry.link);
 }
 
-main();
+const checkForStaticFeeds = async () => {
+  console.log('Checking for new static feeds...')
+  staticFeeds.forEach(async (feed) => {
+    const data = await extract(feed.uri);
+    if (!data.entries) {
+      console.log('No entries in feed ' + data);
+      return
+    }
+
+    data.entries.forEach(async (entry) => {
+      // Check if the entry was published in the last hour
+      if (entry.published! > new Date(Date.now() - 60 * 60 * 1000)) {
+        console.log('Publishing: ' + feed.title + "\n\n" + entry.title + " " + entry.link + '')
+        await publish(feed.title + "\n\n" + entry.title + " " + entry.link);
+      }
+    })
+  })
+}
+
+const main = async () => {
+  // Run a random feed every 1 hour
+  setInterval(pickRandomDynamicFeed, 1 * 60 * 60 * 1000); // 1 hour
+
+  // Wait 15 minutes and then check for static feeds
+  setTimeout(async () => {
+    // Check for new static content every hour
+    setInterval(checkForStaticFeeds, 1 * 60 * 60 * 1000); // 1 hour
+  }, 15 * 60 * 1000); // 15 minutes
+}
+
+pickRandomDynamicFeed();
