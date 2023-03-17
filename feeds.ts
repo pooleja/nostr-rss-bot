@@ -72,6 +72,10 @@ export const staticFeeds: Feed[] = [
   {
     uri: 'https://blog.bitmex.com/feed/',
     title: 'New Article from BitMEX',
+  },
+  {
+    uri: 'https://www.elidourado.com/feed',
+    title: 'New Article from Eli Dourado',
   }
 ]
 

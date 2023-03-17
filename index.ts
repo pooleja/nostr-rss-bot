@@ -95,9 +95,14 @@ const checkForStaticFeeds = async () => {
       return
     }
 
+    console.log('\n\n' + feed.title);
+
     data.entries.forEach(async (entry) => {
       // Check if the entry was published in the last hour
-      if (entry.published! > new Date(Date.now() - 60 * 60 * 1000)) {
+      const publishTimeMs = new Date(entry.published!).getTime();
+      const lookback = Date.now() - 60 * 60 * 1000 * 1;
+
+      if (publishTimeMs > lookback) {
         console.log('Publishing: ' + feed.title + "\n\n" + entry.title + " " + entry.link + '')
         await publish(feed.title + "\n\n" + entry.title + " " + entry.link);
       }
